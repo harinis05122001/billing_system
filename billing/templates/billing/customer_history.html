@@ -1,0 +1,90 @@
+{% extends "billing/base.html" %}
+{% block title %}Purchase History{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Purchase history</h1>
+    <p>Every bill generated, most recent first -- filter to narrow it down.</p>
+</div>
+
+<div class="card">
+    <form method="get" class="filter-bar">
+        <div class="field">
+            <label for="email">Customer email</label>
+            <input type="text" id="email" name="email" list="known-emails" placeholder="Search by email..." value="{{ email }}">
+            <datalist id="known-emails">
+                {% for known_email in known_emails %}<option value="{{ known_email }}"></option>{% endfor %}
+            </datalist>
+        </div>
+        <div class="field">
+            <label for="date_from">From</label>
+            <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+        </div>
+        <div class="field">
+            <label for="date_to">To</label>
+            <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+        </div>
+        <div class="field">
+            <label for="email_status">Invoice email</label>
+            <select id="email_status" name="email_status">
+                <option value="">All</option>
+                {% for value, label in email_status_choices %}
+                <option value="{{ value }}" {% if email_status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="button-row">
+            <button type="submit" class="primary">Filter</button>
+            <a class="button ghost" href="{% url 'billing:customer_history' %}">Reset</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="section-title">
+        <h2>{{ page_obj.paginator.count }} purchase{{ page_obj.paginator.count|pluralize }}</h2>
+    </div>
+
+    {% if page_obj.object_list %}
+        {% for bill in page_obj %}
+        <a class="purchase-row" href="{% url 'billing:bill_detail' bill.id %}">
+            <div>
+                <div class="purchase-id">Invoice #{{ bill.id }}</div>
+                <div class="purchase-date">
+                    {{ bill.customer.email }} &middot; {{ bill.created_at }}
+                    &middot; {{ bill.items.count }} item{{ bill.items.count|pluralize }}
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div class="purchase-amount">Rs. {{ bill.rounded_total }}</div>
+                <div class="purchase-meta">
+                    <span class="badge badge-{{ bill.email_status }}">{{ bill.get_email_status_display }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="button-row" style="justify-content:center; margin-top: var(--space-4);">
+            {% if page_obj.has_previous %}
+            <a class="button" href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.previous_page_number }}">&larr; Previous</a>
+            {% endif %}
+            <span class="hint">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a class="button" href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.next_page_number }}">Next &rarr;</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">&#128269;</div>
+            {% if has_any_bills %}
+            <p><strong>No purchases match these filters</strong></p>
+            <p>Try widening your search or <a href="{% url 'billing:customer_history' %}">clearing the filters</a>.</p>
+            {% else %}
+            <p><strong>No bills yet</strong></p>
+            <p>Generate a bill and it will show up here.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

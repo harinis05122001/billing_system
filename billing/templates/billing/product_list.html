@@ -1,0 +1,54 @@
+{% extends "billing/base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Products</h1>
+    <p>Manage what's for sale -- prices, tax rates, and stock on hand.</p>
+</div>
+
+<div class="card">
+    <div class="section-title">
+        <h2>{{ products|length }} product{{ products|length|pluralize }}</h2>
+        <a class="button primary" href="{% url 'billing:product_add' %}">+ Add product</a>
+    </div>
+
+    {% if products %}
+    <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Product ID</th><th>Name</th><th>Price</th><th>Tax %</th><th>Stock</th><th></th>
+            </tr>
+            {% for p in products %}
+            <tr>
+                <td>{{ p.product_id }}</td>
+                <td>{{ p.name }}</td>
+                <td>Rs. {{ p.price }}</td>
+                <td>{{ p.tax_percent }}%</td>
+                <td>
+                    {{ p.stock }}
+                    {% if p.stock == 0 %}<span class="badge badge-stock-out">Out</span>
+                    {% elif p.stock <= 5 %}<span class="badge badge-stock-low">Low</span>{% endif %}
+                </td>
+                <td>
+                    <div class="button-row">
+                        <a class="button ghost" href="{% url 'billing:product_edit' p.pk %}">Edit</a>
+                        <form method="post" action="{% url 'billing:product_delete' p.pk %}"
+                              onsubmit="return confirm('Delete {{ p.product_id }}? This cannot be undone.');">
+                            {% csrf_token %}
+                            <button type="submit" class="icon-button" title="Delete {{ p.product_id }}" aria-label="Delete {{ p.product_id }}">&#128465;</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128230;</div>
+        <p><strong>No products yet</strong></p>
+        <p>Add your first product to start billing customers.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

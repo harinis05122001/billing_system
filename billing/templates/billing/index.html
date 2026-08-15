@@ -1,0 +1,25 @@
+{% extends "billing/base.html" %}
+{% block title %}Billing System{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Welcome</h1>
+    <p>Generate a customer bill, or look up a customer's previous purchases.</p>
+</div>
+<div class="landing-grid">
+    <a class="landing-card" href="{% url 'billing:billing_form' %}">
+        <div class="landing-icon">&#128179;</div>
+        <h3>Generate a new bill</h3>
+        <p>Add products, collect payment, and email the invoice automatically.</p>
+    </a>
+    <a class="landing-card" href="{% url 'billing:customer_history' %}">
+        <div class="landing-icon">&#128712;</div>
+        <h3>View purchase history</h3>
+        <p>Search a customer by email and see everything they've bought.</p>
+    </a>
+    <a class="landing-card" href="{% url 'billing:product_list' %}">
+        <div class="landing-icon">&#9881;</div>
+        <h3>Manage products &amp; stock</h3>
+        <p>Add products and adjust prices, tax rates, and stock on hand.</p>
+    </a>
+</div>
+{% endblock %}

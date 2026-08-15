@@ -1,0 +1,24 @@
+Invoice - Bill #{{ bill.id }}
+Date: {{ bill.created_at }}
+Customer: {{ bill.customer.email }}
+
+Items
+-----
+{% for item in bill.items.all %}{{ item.product.product_id }} | {{ item.product.name }} | Qty: {{ item.quantity }} | Unit price: Rs. {{ item.unit_price }} | Tax: {{ item.tax_percent }}% (Rs. {{ item.tax_amount }}) | Line total: Rs. {{ item.line_total }}
+{% endfor %}
+Summary
+-------
+Total price without tax: Rs. {{ bill.subtotal }}
+Total tax payable: Rs. {{ bill.tax_total }}
+Net price of the purchased items: Rs. {{ bill.net_total }}
+Rounded amount payable: Rs. {{ bill.rounded_total }}
+Paid amount: Rs. {{ bill.paid_amount }}
+Balance returned to you: Rs. {{ bill.balance_amount }}
+{% if bill.tendered_denominations.all %}
+Cash received:
+{% for bt in bill.tendered_denominations.all %}Rs. {{ bt.denomination.value }} x {{ bt.count }}
+{% endfor %}{% endif %}{% if bill.change_denominations.all %}
+Balance denomination breakdown:
+{% for bd in bill.change_denominations.all %}Rs. {{ bd.denomination.value }} x {{ bd.count }}
+{% endfor %}{% endif %}
+Thank you for your purchase.

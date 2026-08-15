@@ -1,0 +1,93 @@
+{% extends "billing/base.html" %}
+{% block title %}Bill #{{ bill.id }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Invoice #{{ bill.id }}</h1>
+    <p>{{ bill.created_at }}</p>
+</div>
+
+<div class="card">
+    <div class="section-title">
+        <div>
+            <h2 style="margin-bottom:0.2rem;">{{ bill.customer.email }}</h2>
+            <span class="hint">Customer</span>
+        </div>
+        <div style="text-align:right;">
+            <span class="badge badge-{{ bill.email_status }}">
+                {% if bill.email_status == "sent" %}&#10003;{% elif bill.email_status == "failed" %}&#33;{% else %}&#8987;{% endif %}
+                Invoice email: {{ bill.get_email_status_display }}
+            </span>
+            {% if bill.email_sent_at %}<div class="hint">sent {{ bill.email_sent_at }}</div>{% endif %}
+            {% if bill.email_status == "failed" %}<div class="hint">{{ bill.email_error }}</div>{% endif %}
+            <form method="post" action="{% url 'billing:resend_invoice_email' bill.id %}" style="margin-top:0.5rem;" class="no-print">
+                {% csrf_token %}
+                <button type="submit" class="button ghost">&#128232; Resend invoice email</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-section">
+        <h2>Items purchased</h2>
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>Product</th><th>Unit price</th><th>Qty</th><th>Purchase price</th>
+                    <th>Tax %</th><th>Tax payable</th><th>Line total</th>
+                </tr>
+                {% for item in bill.items.all %}
+                <tr>
+                    <td>{{ item.product.product_id }} &middot; {{ item.product.name }}</td>
+                    <td>Rs. {{ item.unit_price }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>Rs. {{ item.line_subtotal }}</td>
+                    <td>{{ item.tax_percent }}%</td>
+                    <td>Rs. {{ item.tax_amount }}</td>
+                    <td>Rs. {{ item.line_total }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <div class="card-section">
+        <div class="receipt-summary">
+            <div class="summary-row"><span class="label">Total price without tax</span><span class="value">Rs. {{ bill.subtotal }}</span></div>
+            <div class="summary-row"><span class="label">Total tax payable</span><span class="value">Rs. {{ bill.tax_total }}</span></div>
+            <div class="summary-row"><span class="label">Net price of the purchased items</span><span class="value">Rs. {{ bill.net_total }}</span></div>
+            <div class="summary-row"><span class="label">Rounded amount payable</span><span class="value">Rs. {{ bill.rounded_total }}</span></div>
+            <div class="summary-row"><span class="label">Cash paid by customer</span><span class="value">Rs. {{ bill.paid_amount }}</span></div>
+            <div class="summary-row total grand"><span class="label">Balance payable to the customer</span><span class="value">Rs. {{ bill.balance_amount }}</span></div>
+        </div>
+    </div>
+
+    <div class="card-section">
+        <h2>Cash received from customer</h2>
+        <p class="hint">Added to the shop's till when this bill was generated:</p>
+        <div class="chip-row">
+            {% for bt in bill.tendered_denominations.all %}
+            <span class="chip chip-received">Rs. {{ bt.denomination.value }} <span class="chip-count">&times;{{ bt.count }}</span></span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card-section">
+        <h2>Balance denomination</h2>
+        {% if bill.change_denominations.all %}
+        <p class="hint">Hand back the following notes/coins to the customer (drawn from the till):</p>
+        <div class="chip-row">
+            {% for bd in bill.change_denominations.all %}
+            <span class="chip">Rs. {{ bd.denomination.value }} <span class="chip-count">&times;{{ bd.count }}</span></span>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state" style="padding: var(--space-3) 0;">No change due -- exact payment.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="button-row no-print">
+    <button type="button" class="button" onclick="window.print()">Print invoice</button>
+    <a class="button primary" href="{% url 'billing:billing_form' %}">Generate another bill</a>
+    <a class="button ghost" href="{% url 'billing:customer_history' %}">Purchase history</a>
+</div>
+{% endblock %}

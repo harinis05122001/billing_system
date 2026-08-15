@@ -1,0 +1,33 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Billing System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'billing/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a href="{% url 'billing:index' %}" class="brand">
+            <span class="brand-mark">&#8377;</span> Billing System
+        </a>
+        <nav>
+            <a href="{% url 'billing:billing_form' %}" class="{% if request.resolver_match.url_name == 'billing_form' %}active{% endif %}">New Bill</a>
+            <a href="{% url 'billing:customer_history' %}" class="{% if request.resolver_match.url_name == 'customer_history' %}active{% endif %}">Purchase History</a>
+            <a href="{% url 'billing:product_list' %}" class="{% if request.resolver_match.url_name in "product_list product_add product_edit product_delete" %}active{% endif %}">Products</a>
+            <a href="/admin/">Admin</a>
+        </nav>
+    </header>
+    <main>
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

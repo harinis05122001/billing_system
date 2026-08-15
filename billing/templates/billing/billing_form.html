@@ -1,0 +1,173 @@
+{% extends "billing/base.html" %}
+{% load static %}
+{% block title %}Generate Bill{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Generate a bill</h1>
+    <p>Pick products from the catalog on the left, then collect payment on the right.</p>
+</div>
+
+<form method="post" action="{% url 'billing:billing_form' %}" id="billing-form">
+    {% csrf_token %}
+    <div class="billing-layout">
+        <div class="billing-catalog card">
+            <div class="section-title">
+                <h2>&#128722; Product catalog</h2>
+            </div>
+            <div class="field" style="max-width:none; margin-bottom: var(--space-3);">
+                <input type="search" id="product-filter" placeholder="Search by ID or name...">
+            </div>
+            <p class="hint" style="margin-bottom: var(--space-3);">Click a product to add it to the bill.</p>
+            <div class="table-wrap">
+                <table id="product-catalog-table">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Tax %</th>
+                        <th>Stock</th>
+                    </tr>
+                    {% for p in products %}
+                    <tr class="product-pick-row" data-pick-product-id="{{ p.product_id }}" data-pick-name="{{ p.name }}"
+                        data-search-text="{{ p.product_id|lower }} {{ p.name|lower }}">
+                        <td>{{ p.product_id }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>Rs. {{ p.price }}</td>
+                        <td>{{ p.tax_percent }}%</td>
+                        <td>
+                            {{ p.stock }}
+                            {% if p.stock == 0 %}<span class="badge badge-stock-out">Out</span>
+                            {% elif p.stock <= 5 %}<span class="badge badge-stock-low">Low</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <div class="billing-main">
+            <div class="card">
+                <div class="field">
+                    <label for="id_customer_email">Customer email</label>
+                    <input type="email" id="id_customer_email" name="customer_email" placeholder="customer@example.com"
+                        value="{{ form.customer_email.value|default:'' }}" required>
+                    {% for error in form.customer_email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    <div class="hint">The invoice will be emailed here in the background once the bill is generated.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">
+                    <h2>&#129534; Products in this bill</h2>
+                    <button type="button" id="add-row-button" class="ghost">+ Add product</button>
+                </div>
+                <div id="product-rows">
+                    {% for product_id, quantity in rows %}
+                    <div class="product-row" data-row>
+                        <div class="row-field">
+                            <label>Product</label>
+                            <input type="text" name="product_id" list="product-options" autocomplete="off"
+                                placeholder="e.g. P001" value="{{ product_id }}" data-product-input>
+                        </div>
+                        <div class="row-field">
+                            <label>Quantity</label>
+                            <input type="number" name="quantity" min="1" placeholder="1" value="{{ quantity }}"
+                                data-quantity-input>
+                        </div>
+                        <div class="row-field">
+                            <label>Line total</label>
+                            <div class="row-line-total" data-line-total>&mdash;</div>
+                        </div>
+                        <button type="button" class="icon-button remove-row" title="Remove row"
+                            aria-label="Remove row">&#10005;</button>
+                        <div class="row-hint" data-row-hint></div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <template id="product-row-template">
+                    <div class="product-row" data-row>
+                        <div class="row-field">
+                            <label>Product</label>
+                            <input type="text" name="product_id" list="product-options" autocomplete="off"
+                                placeholder="e.g. P001" data-product-input>
+                        </div>
+                        <div class="row-field">
+                            <label>Quantity</label>
+                            <input type="number" name="quantity" min="1" placeholder="1" data-quantity-input>
+                        </div>
+                        <div class="row-field">
+                            <label>Line total</label>
+                            <div class="row-line-total" data-line-total>&mdash;</div>
+                        </div>
+                        <button type="button" class="icon-button remove-row" title="Remove row"
+                            aria-label="Remove row">&#10005;</button>
+                        <div class="row-hint" data-row-hint></div>
+                    </div>
+                </template>
+
+                <datalist id="product-options">
+                    {% for p in products %}
+                    <option value="{{ p.product_id }}">{{ p.product_id }} &mdash; {{ p.name }} (Rs. {{ p.price }}, {{
+                        p.stock }} in stock)</option>
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="card">
+                <div class="section-title">
+                    <h2>&#128176; Cash received from customer</h2>
+                </div>
+                <p class="hint" style="margin-bottom: var(--space-3);">
+                    Enter how many of each note/coin the customer handed over. This is added to the shop's
+                    till, and any change given is drawn back out of it automatically. The total below updates
+                    as you type and always stays visible at the bottom of the screen.
+                </p>
+                <div class="denomination-grid">
+                    {% for d in denominations %}
+                    <div class="denomination-tile">
+                        <div class="denom-value">Rs. {{ d.value }}</div>
+                        <div class="denom-till">{{ d.available_count }} in till</div>
+                        <input type="number" name="tender_{{ d.value }}" min="0" placeholder="0"
+                               data-tender-input data-denom-value="{{ d.value }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="hint" style="margin-top: var(--space-3);">
+                    Managed via <a href="/admin/billing/denomination/">Admin</a> if a new denomination needs to be added.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="payment-bar no-print">
+        <div class="payment-bar-inner">
+            <div class="payment-figure">
+                <span class="payment-label">Subtotal</span>
+                <span class="payment-value" data-sum-subtotal>Rs. 0.00</span>
+            </div>
+            <div class="payment-figure">
+                <span class="payment-label">Tax</span>
+                <span class="payment-value" data-sum-tax>Rs. 0.00</span>
+            </div>
+            <div class="payment-figure primary">
+                <span class="payment-label">Amount to collect</span>
+                <span class="payment-value" data-sum-total>Rs. 0</span>
+            </div>
+            <div class="payment-figure change" data-change-row style="display:none;">
+                <span class="payment-label" data-change-label>Change to give</span>
+                <span class="payment-value" data-change-value>Rs. 0</span>
+            </div>
+            <div class="button-row">
+                <button type="submit" class="primary">Generate bill</button>
+                <a class="button ghost" href="{% url 'billing:index' %}">Cancel</a>
+            </div>
+        </div>
+    </div>
+</form>
+{{ products_json|json_script:"products-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'billing/billing.js' %}"></script>
+{% endblock %}

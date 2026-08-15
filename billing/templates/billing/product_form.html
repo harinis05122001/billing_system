@@ -1,0 +1,25 @@
+{% extends "billing/base.html" %}
+{% block title %}{% if is_edit %}Edit Product{% else %}Add Product{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{% if is_edit %}Edit '{{ product.product_id }}'{% else %}Add a product{% endif %}</h1>
+</div>
+
+<div class="card" style="max-width: 480px;">
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="field" style="max-width:none;">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<div class="hint">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+        {% endfor %}
+        <div class="button-row">
+            <button type="submit" class="primary">{% if is_edit %}Save changes{% else %}Add product{% endif %}</button>
+            <a class="button ghost" href="{% url 'billing:product_list' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

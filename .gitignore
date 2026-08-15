@@ -1,0 +1,28 @@
+# Environments
+.venv
+.env
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Testing / coverage
+.coverage
+htmlcov/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# OS
+.DS_Store
+
+# Claude Code local (personal) settings -- settings.json stays trackable
+.claude/settings.local.json
