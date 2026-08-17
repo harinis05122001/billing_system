@@ -266,6 +266,8 @@ needed to run the suite.
 
 ## 10. Screenshots
 
+**Demo video**: [Watch a walkthrough of the application](https://www.awesomescreenshot.com/video/55596446?key=e68af1ebbae843ec4770799d4e34dba1)
+
 **Billing page** — searchable product catalog, dynamic product rows, cash received by denomination, live totals bar:
 ![Billing page](screenshots/01-billing-page.png)
 
